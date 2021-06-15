@@ -5,6 +5,8 @@ import * as vscode from 'vscode';
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 import * as fs from 'fs';
+import {execSync} from 'child_process'; //同步子进程
+import * as moment from 'moment';
 import webview from './webview';
 
 
@@ -59,22 +61,32 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	let myFileHeader = vscode.commands.registerCommand('yyh-vscode-plugin.fileHeader', () => {
-		const headerMap = {
+
+		const name = execSync('git config user.name').toString().trim();
+		const date = moment().format('YYYY-MM-DD hh:mm:ss');
+		vscode.window.showInformationMessage(date);
+
+		const headerMap:any = {
 			js: `/*
- * @Author: zhijiezhang 
- * @Date: 2021-05-18 16:08:00 
- * @Last Modified by: zhijiezhanng
- * @Last Modified time: 2021-05-18 16:08:40
-*/\n\t`
+ * @Author: ${name}
+ * @Date: ${date} 
+ * @Last Modified by: ${name}
+ * @Last Modified time: ${date}
+*/\n`,
+			ts: 'ts',
+			vue: `<!-- @Author ${name} -->\n<!-- @Date: ${date} -->\n<!-- @Last Modified by: ${name} -->\n<!-- @Last Modified time: ${date} -->`
 		};
-		fs.writeFile(`${vscode.window.activeTextEditor?.document.fileName}`, headerMap.js, { flag: 'w+' }, err => {
+		const filePath = vscode.window.activeTextEditor?.document.fileName + '';
+		const extName = filePath.split('.').reverse()[0];
+
+
+		fs.writeFile(`${vscode.window.activeTextEditor?.document.fileName}`, headerMap[extName], { flag: 'w+' }, err => {
 			if (err) {
 			  console.error(err);
 			  return;
 			};
-			vscode.window.showInformationMessage(`${vscode.window.activeTextEditor?.document.getText()}`);
 			//文件写入成功。
-		})
+		});
 	});
 
 	context.subscriptions.push(disposable, myCommand, myWebview, myFileHeader);
